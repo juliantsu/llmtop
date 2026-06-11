@@ -1,5 +1,7 @@
 #include "ui/ui.hpp"
 
+#include "jthread_compat.hpp"
+
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -116,7 +118,7 @@ int run_ui(AppState& state, const Options& opts) {
   });
 
   // ~10 FPS redraw; data freshness is governed by the poller threads.
-  std::jthread refresher([&screen](std::stop_token st) {
+  Jthread refresher([&screen](StopToken st) {
     int auto_exit_ms = 0;
     if (const char* env = std::getenv("LLMTOP_AUTO_EXIT_MS"))
       auto_exit_ms = std::atoi(env);

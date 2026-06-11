@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "cli.hpp"
+#include "jthread_compat.hpp"
 #include "sources/demo_source.hpp"
 #include "sources/llamacpp_source.hpp"
 #include "sources/nvml_source.hpp"
@@ -17,7 +18,7 @@
 namespace llmtop {
 namespace {
 
-void run_source(Source& source, AppState& state, std::stop_token st) {
+void run_source(Source& source, AppState& state, StopToken st) {
   using namespace std::chrono;
   while (!st.stop_requested()) {
     auto started = steady_clock::now();
@@ -69,12 +70,12 @@ int main(int argc, char** argv) {
     sources.push_back(std::make_unique<OllamaSource>(state, opts.ollama_url));
   }
 
-  // `threads` is declared after `sources`, so on scope exit each jthread is
+  // `threads` is declared after `sources`, so on scope exit each thread is
   // stopped and joined before the Source objects it uses are destroyed.
-  std::vector<std::jthread> threads;
+  std::vector<Jthread> threads;
   threads.reserve(sources.size());
   for (auto& source : sources) {
-    threads.emplace_back([&state, src = source.get()](std::stop_token st) {
+    threads.emplace_back([&state, src = source.get()](StopToken st) {
       run_source(*src, state, st);
     });
   }

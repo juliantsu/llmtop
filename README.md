@@ -1,5 +1,7 @@
 # llmtop
 
+[![build](https://github.com/juliantsu/llmtop/actions/workflows/build.yml/badge.svg)](https://github.com/juliantsu/llmtop/actions/workflows/build.yml)
+
 **nvtop for local LLM inference.** A terminal UI that shows what your GPU and
 your local inference servers — llama.cpp and Ollama — are doing, live, in one
 screen.

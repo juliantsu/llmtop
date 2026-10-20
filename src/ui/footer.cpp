@@ -30,6 +30,8 @@ Element render_footer(const Snapshot& s) {
   parts.push_back(key_hint("q", "quit"));
   parts.push_back(key_hint("1·2·3", "focus"));
   parts.push_back(key_hint("+/-", strf("poll %dms", s.interval_ms)));
+  parts.push_back(
+      key_hint("g", s.hide_integrated ? "show iGPU" : "hide iGPU"));
   parts.push_back(filler());
   if (s.demo) {
     parts.push_back(text("● demo data  ") | color(Color::Yellow));

@@ -11,6 +11,8 @@
 #include "sources/llamacpp_source.hpp"
 #include "sources/nvml_source.hpp"
 #include "sources/ollama_source.hpp"
+#include "sources/rocmm_source.hpp"
+#include "sources/sysfs_source.hpp"
 #include "sources/source.hpp"
 #include "state.hpp"
 #include "ui/ui.hpp"
@@ -57,7 +59,7 @@ int main(int argc, char** argv) {
     std::scoped_lock lock(state.mutex);
     state.llama.url = opts.llamacpp_url;
     state.ollama.url = opts.ollama_url;
-    state.gpu.disabled = opts.no_nvml && !opts.demo;
+    state.gpu.disabled = opts.no_nvml;
   }
 
   std::vector<std::unique_ptr<Source>> sources;
@@ -66,6 +68,10 @@ int main(int argc, char** argv) {
   } else {
     if (!opts.no_nvml)
       sources.push_back(std::make_unique<NvmlSource>(state));
+    if (!opts.no_rocmm)
+      sources.push_back(std::make_unique<RocmSource>(state));
+    if (!opts.no_sysfs_amdgpu)
+      sources.push_back(std::make_unique<SysfsSource>(state));
     sources.push_back(std::make_unique<LlamaCppSource>(state, opts.llamacpp_url));
     sources.push_back(std::make_unique<OllamaSource>(state, opts.ollama_url));
   }

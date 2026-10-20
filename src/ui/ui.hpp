@@ -17,6 +17,7 @@ struct Snapshot {
   int interval_ms = 500;
   bool demo = false;
   int focused = 0;  // 0 = none, 1..3 = panel index
+  bool hide_integrated = false;
 };
 
 int run_ui(AppState& state, const Options& opts);

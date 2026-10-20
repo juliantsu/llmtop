@@ -16,6 +16,14 @@ namespace llmtop {
 // completes, which would render a live generation as zero followed by one
 // huge spike. Counter deltas remain as fallback for servers without slot
 // token counts.
+//
+// Prompt processing follows the same idea: while a fill (or KV compaction)
+// runs, /slots reports n_prompt_tokens_processed climbing live — it counts
+// evaluated (uncached) tokens — so the prompt rate is progress-over-elapsed
+// of real prefill work, truthful between the server's sparse chunk-boundary
+// counter updates, where a per-poll delta would burst and collapse. Servers
+// without those fields fall back to crediting the prompt once at the first
+// generated token.
 class LlamaCppSource final : public Source {
  public:
   LlamaCppSource(AppState& state, std::string base_url);
@@ -28,6 +36,7 @@ class LlamaCppSource final : public Source {
     std::int64_t n_decoded = 0;
     bool decoding_seen = false;  // current task has produced tokens
     std::chrono::steady_clock::time_point task_start{};
+    std::int64_t pp_base = 0;  // prompt progress observed at task start
   };
 
   std::string base_;

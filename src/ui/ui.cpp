@@ -82,10 +82,12 @@ int run_ui(AppState& state, const Options& opts) {
   (void)opts;
   auto screen = ScreenInteractive::Fullscreen();
   int focused = 0;
+  bool hide_integrated = false;
 
   auto renderer = Renderer([&] {
     Snapshot snap = take_snapshot(state);
     snap.focused = focused;
+    snap.hide_integrated = hide_integrated;
     return vbox({
         render_header(snap),
         render_gpu_panel(snap),
@@ -105,6 +107,10 @@ int run_ui(AppState& state, const Options& opts) {
         focused = focused == k ? 0 : k;
         return true;
       }
+    }
+    if (e == Event::Character('g') || e == Event::Character('G')) {
+      hide_integrated = !hide_integrated;
+      return true;
     }
     if (e == Event::Character('+') || e == Event::Character('=')) {
       state.interval_ms = std::min(5000, state.interval_ms.load() + 100);

@@ -10,6 +10,8 @@ struct Options {
   std::string llamacpp_url = "http://127.0.0.1:8080";
   std::string ollama_url = "http://127.0.0.1:11434";
   bool no_nvml = false;
+  bool no_rocmm = false;
+  bool no_sysfs_amdgpu = false;
   bool demo = false;
   bool version = false;
   bool help = false;
@@ -25,7 +27,9 @@ inline std::string usage() {
       "\n"
       "  --llamacpp-url <url>  llama.cpp server base URL (default http://127.0.0.1:8080)\n"
       "  --ollama-url <url>    Ollama base URL            (default http://127.0.0.1:11434)\n"
-      "  --no-nvml             disable GPU telemetry\n"
+      "  --no-nvml             disable NVIDIA GPU telemetry\n"
+      "  --no-rocmm            disable ROCm-based AMD GPU telemetry\n"
+      "  --no-sysfs-amdgpu     disable sysfs-based AMD GPU telemetry\n"
       "  --demo                run with a fake data generator (no GPU/servers needed)\n"
       "  --interval <ms>       poll interval, 100..5000 (default 500)\n"
       "  --version             print version and exit\n"
@@ -64,6 +68,10 @@ inline Options parse_cli(int argc, const char* const* argv) {
       o.interval_ms = std::clamp(ms, 100, 5000);
     } else if (a == "--no-nvml") {
       o.no_nvml = true;
+    } else if (a == "--no-rocmm") {
+      o.no_rocmm = true;
+    } else if (a == "--no-sysfs-amdgpu") {
+      o.no_sysfs_amdgpu = true;
     } else if (a == "--demo") {
       o.demo = true;
     } else if (a == "--version" || a == "-v") {

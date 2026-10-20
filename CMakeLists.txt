@@ -44,6 +44,8 @@ find_package(Threads REQUIRED)
 add_executable(llmtop
   src/main.cpp
   src/sources/nvml_source.cpp
+  src/sources/rocmm_source.cpp
+  src/sources/sysfs_source.cpp
   src/sources/llamacpp_source.cpp
   src/sources/ollama_source.cpp
   src/sources/demo_source.cpp

@@ -1,5 +1,7 @@
+#include <cstdint>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "ui/ui.hpp"
 #include "util.hpp"
@@ -9,6 +11,14 @@ namespace llmtop {
 using namespace ftxui;
 
 namespace {
+
+// Integrated GPUs expose only the system's shared memory (e.g. 512 MB);
+// discrete LLM cards are much larger. Unknown (0) totals are never hidden.
+constexpr std::uint64_t kIntegratedVramMax = 4ULL * 1024 * 1024 * 1024;
+
+bool is_integrated(const GpuDevice& d) {
+  return d.mem_total > 0 && d.mem_total < kIntegratedVramMax;
+}
 
 Color temp_color(int temp_c) {
   if (temp_c >= 85)
@@ -78,11 +88,15 @@ Element render_gpu_panel(const Snapshot& s) {
            center | size(HEIGHT, EQUAL, 3);
   } else {
     Elements blocks;
-    bool multi = s.gpu.devices.size() > 1;
-    for (std::size_t i = 0; i < s.gpu.devices.size(); ++i) {
+    std::vector<std::size_t> visible;
+    for (std::size_t i = 0; i < s.gpu.devices.size(); ++i)
+      if (!s.hide_integrated || !is_integrated(s.gpu.devices[i]))
+        visible.push_back(i);
+    bool multi = visible.size() > 1;
+    for (std::size_t i = 0; i < visible.size(); ++i) {
       if (i > 0)
         blocks.push_back(separator());
-      blocks.push_back(device_block(s.gpu.devices[i], multi));
+      blocks.push_back(device_block(s.gpu.devices[visible[i]], multi));
     }
     body = vbox(std::move(blocks));
   }

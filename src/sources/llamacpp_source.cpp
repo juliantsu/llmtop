@@ -191,14 +191,22 @@ void LlamaCppSource::poll() {
   double slot_gen_rate = 0, slot_prompt_rate = 0;
   if (have_slots) {
     std::int64_t gen_tokens = 0;
+    double pp_fill_rate = 0;
     for (const auto& d : slots) {
       if (d.n_decoded < 0)
         continue;
       slot_counters = true;
       SlotTrack& t = track_[d.ui.id];
+
+      // live prompt progress for this task; n_prompt_tokens_processed counts
+      // evaluated (uncached) tokens on current builds, so cache hits never
+      // masquerade as prefill — and must NOT be reduced by the cache again
+      const std::int64_t pp_now = d.n_prompt_processed;
+
       if (d.id_task != t.id_task) {
         t.id_task = d.id_task;
         t.task_start = now;
+        t.pp_base = pp_now;
         t.decoding_seen = d.n_decoded > 0;
         if (d.ui.processing && d.n_decoded > 0)
           gen_tokens += d.n_decoded;  // task started and decoded since last poll
@@ -219,9 +227,22 @@ void LlamaCppSource::poll() {
         }
         t.n_decoded = std::max(t.n_decoded, d.n_decoded);
       }
+
+      // continuous fill rate: progress / time since task start, valid until
+      // the first token ends the prompt phase (chunk updates are sparse, so
+      // a per-poll delta would burst and collapse instead of holding steady)
+      if (d.ui.processing && !t.decoding_seen) {
+        double edt = std::chrono::duration<double>(now - t.task_start).count();
+        edt = std::max(edt, 0.1);
+        pp_fill_rate += static_cast<double>(
+                            std::max<std::int64_t>(pp_now - t.pp_base, 0)) /
+                        edt;
+      }
     }
     if (slots_dt > 0.05)
       slot_gen_rate = static_cast<double>(gen_tokens) / slots_dt;
+    // the continuous fill estimate outranks the one-shot first-token credit
+    slot_prompt_rate += pp_fill_rate;
     prev_slots_time_ = now;
     have_prev_slots_ = true;
   } else {
